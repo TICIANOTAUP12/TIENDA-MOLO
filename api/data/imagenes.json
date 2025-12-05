@@ -1,0 +1,37 @@
+[
+  {
+    "id": "img_001",
+    "producto_id": "prod_001",
+    "url_imagen": "https://trae-api-us.mchost.guru/api/ide/v1/text_to_image?prompt=remera%20blanca%20basica%20de%20algodon%20de%20mujer%20en%20un%20fondo%20claro%20estilo%20minimalista%20para%20tienda%20de%20ropa&image_size=square",
+    "orden": 0,
+    "created_at": "2024-01-01T10:00:00"
+  },
+  {
+    "id": "img_002",
+    "producto_id": "prod_002",
+    "url_imagen": "https://trae-api-us.mchost.guru/api/ide/v1/text_to_image?prompt=remera%20con%20estampado%20moderno%20colorido%20de%20mujer%20en%20fondo%20blanco%20estilo%20tienda%20de%20ropa&image_size=square",
+    "orden": 0,
+    "created_at": "2024-01-01T10:30:00"
+  },
+  {
+    "id": "img_003",
+    "producto_id": "prod_003",
+    "url_imagen": "https://trae-api-us.mchost.guru/api/ide/v1/text_to_image?prompt=jean%20azul%20cl%C3%A1sico%20de%20mujer%20en%20fondo%20claro%20estilo%20minimalista%20para%20tienda%20de%20ropa&image_size=square",
+    "orden": 0,
+    "created_at": "2024-01-01T11:00:00"
+  },
+  {
+    "id": "img_004",
+    "producto_id": "prod_004",
+    "url_imagen": "https://trae-api-us.mchost.guru/api/ide/v1/text_to_image?prompt=camisa%20blanca%20formal%20de%20mujer%20en%20fondo%20claro%20estilo%20tienda%20de%20ropa%20elegante&image_size=square",
+    "orden": 0,
+    "created_at": "2024-01-01T11:30:00"
+  },
+  {
+    "id": "img_005",
+    "producto_id": "prod_005",
+    "url_imagen": "https://trae-api-us.mchost.guru/api/ide/v1/text_to_image?prompt=buzo%20con%20capucha%20gris%20de%20mujer%20en%20fondo%20claro%20estilo%20tienda%20de%20ropa%20urbano&image_size=square",
+    "orden": 0,
+    "created_at": "2024-01-01T12:00:00"
+  }
+]

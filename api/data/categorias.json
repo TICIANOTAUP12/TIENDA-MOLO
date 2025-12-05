@@ -1,0 +1,30 @@
+[
+  {
+    "id": "1",
+    "nombre": "Remeras",
+    "descripcion": "Remeras de algodón de calidad",
+    "imagen_url": "/images/categorias/remeras.jpg",
+    "created_at": "2024-01-01T00:00:00"
+  },
+  {
+    "id": "2",
+    "nombre": "Pantalones",
+    "descripcion": "Pantalones casuales y formales",
+    "imagen_url": "/images/categorias/pantalones.jpg",
+    "created_at": "2024-01-01T00:00:00"
+  },
+  {
+    "id": "3",
+    "nombre": "Camisas",
+    "descripcion": "Camisas para toda ocasión",
+    "imagen_url": "/images/categorias/camisas.jpg",
+    "created_at": "2024-01-01T00:00:00"
+  },
+  {
+    "id": "4",
+    "nombre": "Buzos",
+    "descripcion": "Buzos cómodos y abrigados",
+    "imagen_url": "/images/categorias/buzos.jpg",
+    "created_at": "2024-01-01T00:00:00"
+  }
+]

@@ -1,0 +1,52 @@
+[
+  {
+    "id": "prod_001",
+    "categoria_id": "1",
+    "nombre": "Remera Básica Blanca",
+    "descripcion": "Remera de algodón 100%, cuello redondo, manga corta. Ideal para el día a día.",
+    "precio": 2500,
+    "activo": true,
+    "created_at": "2024-01-01T10:00:00",
+    "updated_at": "2024-01-01T10:00:00"
+  },
+  {
+    "id": "prod_002",
+    "categoria_id": "1",
+    "nombre": "Remera Estampada",
+    "descripcion": "Remera con estampado moderno, algodón premium, colores vibrantes.",
+    "precio": 3200,
+    "activo": true,
+    "created_at": "2024-01-01T10:30:00",
+    "updated_at": "2024-01-01T10:30:00"
+  },
+  {
+    "id": "prod_003",
+    "categoria_id": "2",
+    "nombre": "Jean Clásico",
+    "descripcion": "Jean de corte clásico, tela denim resistente, ideal para cualquier ocasión.",
+    "precio": 4500,
+    "activo": true,
+    "created_at": "2024-01-01T11:00:00",
+    "updated_at": "2024-01-01T11:00:00"
+  },
+  {
+    "id": "prod_004",
+    "categoria_id": "3",
+    "nombre": "Camisa Formal",
+    "descripcion": "Camisa formal de algodón, cuello italiano, perlas de calidad.",
+    "precio": 3800,
+    "activo": true,
+    "created_at": "2024-01-01T11:30:00",
+    "updated_at": "2024-01-01T11:30:00"
+  },
+  {
+    "id": "prod_005",
+    "categoria_id": "4",
+    "nombre": "Buzo Canguro",
+    "descripcion": "Buzo con capucha y bolsillo canguro, tela abrigada, ideal para invierno.",
+    "precio": 5500,
+    "activo": true,
+    "created_at": "2024-01-01T12:00:00",
+    "updated_at": "2024-01-01T12:00:00"
+  }
+]
