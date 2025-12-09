@@ -1,6 +1,7 @@
 import { X, Trash2, Plus, Minus } from 'lucide-react';
 import { Button } from './ui/button';
 import { useCart } from '../contexts/CartContext';
+import { openWhatsApp } from '../utils/whatsapp';
 
 interface CartProps {
   isOpen: boolean;
@@ -28,7 +29,7 @@ export const Cart = ({ isOpen, onClose }: CartProps) => {
     message += `💵 Total: $${getTotalPrice().toLocaleString()}\n\n`;
     message += '¿Pueden confirmar disponibilidad?';
 
-    window.open(`https://wa.me/5491234567890?text=${encodeURIComponent(message)}`, '_blank');
+    openWhatsApp(message);
   };
 
   return (

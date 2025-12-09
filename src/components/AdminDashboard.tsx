@@ -38,9 +38,9 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
         api.getMetricsSummary(token),
       ]);
 
-      const lowStock = products.filter(product => {
+      const lowStock = products.filter((product: any) => {
         const variants = product.variants || [];
-        const totalStock = variants.reduce((sum, variant) => sum + (variant.stock || 0), 0);
+        const totalStock = variants.reduce((sum: number, variant: any) => sum + (variant.stock || 0), 0);
         return totalStock < 5;
       }).length;
 
@@ -57,7 +57,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
       (metrics.topProducts || []).forEach(p => topViewsMap.set(p.id, p.views));
 
       const productData = products
-        .map(product => ({
+        .map((product: any) => ({
           name: product.name,
           views: topViewsMap.get(product.id) || product.views || 0,
           whatsappClicks: product.whatsapp_clicks || 0,
@@ -66,7 +66,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
               ? Math.round(((product.whatsapp_clicks || 0) / (topViewsMap.get(product.id) || product.views || 0)) * 100 * 100) / 100
               : 0,
         }))
-        .sort((a, b) => b.views - a.views)
+        .sort((a: ProductMetrics, b: ProductMetrics) => b.views - a.views)
         .slice(0, 10);
 
       setProductMetrics(productData);

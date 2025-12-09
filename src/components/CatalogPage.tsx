@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { products } from '../data/products';
 import { ProductCard } from './ProductCard';
 import { ImageWithFallback } from './figma/ImageWithFallback';
+import { getWhatsAppHref } from '../utils/whatsapp';
 
 export const CatalogPage = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -108,7 +109,7 @@ export const CatalogPage = () => {
             Nuestro equipo está disponible para asesorarte en tu compra
           </p>
           <a
-            href="https://wa.me/5491234567890"
+            href={getWhatsAppHref()}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg transition"

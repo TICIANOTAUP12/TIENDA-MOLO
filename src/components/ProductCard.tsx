@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Producto } from '@/services/api';
 import { ShoppingCart, MessageCircle } from 'lucide-react';
 import type { Product as CatalogProduct } from '@/data/products';
+import { openWhatsApp } from '../utils/whatsapp';
+import { getWhatsAppHref } from '../utils/whatsapp';
 
 interface ProductCardProps {
   producto?: Producto;
@@ -15,6 +17,10 @@ interface ProductCardProps {
 export const ProductCard: React.FC<ProductCardProps> = ({ producto, product, onWhatsAppClick, onClick }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [selectedSize, setSelectedSize] = useState<string | undefined>(undefined);
+  const [selectedColor, setSelectedColor] = useState<string | undefined>(undefined);
+  const [message, setMessage] = useState<string>('');
+  const [userEdited, setUserEdited] = useState(false);
   useEffect(() => setMounted(true), []);
 
   const normalized = producto
@@ -28,8 +34,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ producto, product, onW
           producto?.variantes && producto.variantes.length > 0
             ? `${producto.variantes[0].talla} - ${producto.variantes[0].color}`
             : undefined,
-        sizes: Array.from(new Set(producto.variantes?.map(v => v.talla) || [])),
-        colors: Array.from(new Set(producto.variantes?.map(v => v.color) || []))
+        sizes: Array.from(new Set(producto.variantes?.map((v: any) => v.talla) || [])),
+        colors: Array.from(new Set(producto.variantes?.map((v: any) => v.color) || []))
       }
     : product
     ? {
@@ -52,17 +58,44 @@ export const ProductCard: React.FC<ProductCardProps> = ({ producto, product, onW
     if (producto && onWhatsAppClick) {
       onWhatsAppClick(producto);
     } else if (normalized) {
-      const message = encodeURIComponent(
+      const message =
         `¡Hola! Me interesa el producto:\n\n` +
         `🛍️ ${normalized.name}\n` +
         `💰 Precio: $${normalized.price.toLocaleString('es-AR')}\n` +
         (normalized.sizes && normalized.sizes.length > 0 ? `📏 Talla: ${normalized.sizes[0]}\n` : '') +
         (normalized.colors && normalized.colors.length > 0 ? `🎨 Color: ${normalized.colors[0]}\n` : '') +
-        `\n¿Está disponible?`
-      );
-      window.open(`https://wa.me/5491234567890?text=${message}`, '_blank');
+        `\n¿Está disponible?`;
+      openWhatsApp(message);
     }
   };
+
+  const baseMessage = () => {
+    if (!normalized) return '';
+    return (
+      `¡Hola! Me interesa el producto:\n\n` +
+      `🛍️ ${normalized.name}\n` +
+      `💰 Precio: $${normalized.price.toLocaleString('es-AR')}\n` +
+      (selectedSize ? `📏 Talla: ${selectedSize}\n` : '') +
+      (selectedColor ? `🎨 Color: ${selectedColor}\n` : '') +
+      `\n¿Está disponible?`
+    );
+  };
+
+  useEffect(() => {
+    if (!normalized) return;
+    if (isOpen) {
+      setSelectedSize(normalized.sizes && normalized.sizes.length > 0 ? normalized.sizes[0] : undefined);
+      setSelectedColor(normalized.colors && normalized.colors.length > 0 ? normalized.colors[0] : undefined);
+      setUserEdited(false);
+    }
+  }, [isOpen, normalized]);
+
+  useEffect(() => {
+    if (!normalized) return;
+    if (!userEdited) {
+      setMessage(baseMessage());
+    }
+  }, [selectedSize, selectedColor, normalized, userEdited]);
 
   return (
     <div>
@@ -114,11 +147,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({ producto, product, onW
           <div className="flex items-center gap-2 text-sm">
             <span className="text-gray-600">Stock:</span>
             <span className={`font-medium ${
-              producto.variantes.some(v => v.stock > 0) 
+              producto.variantes.some((v: any) => v.stock > 0) 
                 ? 'text-green-600' 
                 : 'text-red-600'
             }`}>
-              {producto.variantes.some(v => v.stock > 0) ? 'Disponible' : 'Sin stock'}
+              {producto.variantes.some((v: any) => v.stock > 0) ? 'Disponible' : 'Sin stock'}
             </span>
           </div>
         )}
@@ -177,13 +210,86 @@ export const ProductCard: React.FC<ProductCardProps> = ({ producto, product, onW
                   <h3 className="text-2xl font-bold text-gray-900">{normalized.name}</h3>
                   <p className="text-xl font-semibold text-green-600">${normalized.price.toLocaleString('es-AR')}</p>
                   <p className="text-gray-700">{normalized.description}</p>
-                  <div className="space-y-2">
-                    {normalized.sizes && normalized.sizes.length > 0 && (
-                      <p className="text-sm text-gray-600">Talles: {normalized.sizes.join(', ')}</p>
-                    )}
-                    {normalized.colors && normalized.colors.length > 0 && (
-                      <p className="text-sm text-gray-600">Colores: {normalized.colors.join(', ')}</p>
-                    )}
+
+                  {normalized.sizes && normalized.sizes.length > 0 && (
+                    <div>
+                      <p className="text-sm text-gray-600 mb-2">Talla</p>
+                      <div className="flex flex-wrap gap-2">
+                        {normalized.sizes.map((size) => (
+                          <button
+                            key={size}
+                            onClick={() => { setSelectedSize(size); setUserEdited(false); }}
+                            className={`px-3 py-1 rounded border transition ${
+                              selectedSize === size ? 'bg-black text-white border-black' : 'bg-white border-gray-300 hover:border-black'
+                            }`}
+                          >
+                            {size}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {normalized.colors && normalized.colors.length > 0 && (
+                    <div>
+                      <p className="text-sm text-gray-600 mb-2">Color</p>
+                      <div className="flex flex-wrap gap-2">
+                        {normalized.colors.map((color) => (
+                          <button
+                            key={color}
+                            onClick={() => { setSelectedColor(color); setUserEdited(false); }}
+                            className={`px-3 py-1 rounded border transition ${
+                              selectedColor === color ? 'bg-black text-white border-black' : 'bg-white border-gray-300 hover:border-black'
+                            }`}
+                          >
+                            {color}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div>
+                    <p className="text-sm text-gray-600 mb-2">Mensaje de WhatsApp</p>
+                    <textarea
+                      value={message}
+                      onChange={(e) => { setMessage(e.target.value); setUserEdited(true); }}
+                      rows={4}
+                      className="w-full border rounded p-2 text-sm"
+                    />
+                    <div className="flex items-center justify-between mt-2">
+                      <a
+                        href={getWhatsAppHref(message)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-green-700 hover:underline"
+                      >
+                        Ver enlace directo
+                      </a>
+                      <button
+                        onClick={() => { setUserEdited(false); setMessage(baseMessage()); }}
+                        className="text-xs text-gray-600 hover:text-black"
+                      >
+                        Restablecer mensaje
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3 pt-2">
+                    <Button
+                      onClick={() => openWhatsApp(message)}
+                      className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                    >
+                      <MessageCircle className="w-4 h-4 mr-2" />
+                      Enviar por WhatsApp
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => setIsOpen(false)}
+                      className="flex-1"
+                    >
+                      Cerrar
+                    </Button>
                   </div>
                 </div>
               </div>

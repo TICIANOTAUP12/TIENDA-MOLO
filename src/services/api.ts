@@ -39,6 +39,15 @@ export interface Categoria {
   created_at: string;
 }
 
+export interface Category {
+  id: string;
+  name: string;
+  description: string;
+  product_count: number;
+}
+
+
+
 export interface MetricasResumen {
   total_productos: number;
   visitas_hoy: number;
@@ -259,6 +268,27 @@ export const api = {
   },
   async deleteProduct() {
     throw new Error('deleteProduct no disponible: usa apiService.deleteProducto con token');
+  },
+  async createCategory(data: any) {
+    const token = localStorage.getItem('adminToken');
+    if (!token) throw new Error('No autorizado: Token no encontrado');
+    return apiService.createCategoria(token, {
+      nombre: data.name,
+      descripcion: data.description,
+    });
+  },
+  async updateCategory(id: string, data: any) {
+    const token = localStorage.getItem('adminToken');
+    if (!token) throw new Error('No autorizado: Token no encontrado');
+    return apiService.updateCategoria(token, id, {
+      nombre: data.name,
+      descripcion: data.description,
+    });
+  },
+  async deleteCategory(id: string) {
+    const token = localStorage.getItem('adminToken');
+    if (!token) throw new Error('No autorizado: Token no encontrado');
+    return apiService.deleteCategoria(token, id);
   },
   async trackProductView() {
     // sin implementación específica en frontend

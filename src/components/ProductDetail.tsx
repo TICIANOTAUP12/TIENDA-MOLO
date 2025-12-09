@@ -22,11 +22,11 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({ producto, onWhatsA
     let filtered = producto.variantes || [];
     
     if (selectedTalla) {
-      filtered = filtered.filter(v => v.talla === selectedTalla);
+      filtered = filtered.filter((v: any) => v.talla === selectedTalla);
     }
     
     if (selectedColor) {
-      filtered = filtered.filter(v => v.color === selectedColor);
+      filtered = filtered.filter((v: any) => v.color === selectedColor);
     }
     
     setAvailableVariantes(filtered);
@@ -35,39 +35,39 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({ producto, onWhatsA
   useEffect(() => {
     // Establecer valores por defecto
     if (producto.variantes && producto.variantes.length > 0) {
-      const tallas = Array.from(new Set(producto.variantes.map(v => v.talla)));
-      const colores = Array.from(new Set(producto.variantes.map(v => v.color)));
+      const tallas = Array.from(new Set(producto.variantes.map((v: any) => v.talla)));
+      const colores = Array.from(new Set(producto.variantes.map((v: any) => v.color)));
       
       if (!selectedTalla && tallas.length > 0) {
-        setSelectedTalla(tallas[0]);
+        setSelectedTalla(tallas[0] as string);
       }
       
       if (!selectedColor && colores.length > 0) {
-        setSelectedColor(colores[0]);
+        setSelectedColor(colores[0] as string);
       }
     }
   }, [producto.variantes]);
 
   const handleWhatsAppClick = () => {
     const varianteSeleccionada = producto.variantes?.find(
-      v => v.talla === selectedTalla && v.color === selectedColor
+      (v: any) => v.talla === selectedTalla && v.color === selectedColor
     );
     
     onWhatsAppClick(producto, varianteSeleccionada);
   };
 
   const getTallasDisponibles = () => {
-    const tallas = Array.from(new Set(producto.variantes?.map(v => v.talla) || []));
+    const tallas = Array.from(new Set(producto.variantes?.map((v: any) => v.talla) || []));
     return tallas.sort();
   };
 
   const getColoresDisponibles = () => {
-    const colores = Array.from(new Set(producto.variantes?.map(v => v.color) || []));
+    const colores = Array.from(new Set(producto.variantes?.map((v: any) => v.color) || []));
     return colores.sort();
   };
 
   const getVarianteSeleccionada = () => {
-    return producto.variantes?.find(v => v.talla === selectedTalla && v.color === selectedColor);
+    return producto.variantes?.find((v: any) => v.talla === selectedTalla && v.color === selectedColor);
   };
 
   const varianteActual = getVarianteSeleccionada();
@@ -99,7 +99,7 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({ producto, onWhatsA
           {/* Miniaturas */}
           {producto.imagenes && producto.imagenes.length > 1 && (
             <div className="grid grid-cols-4 gap-2">
-              {producto.imagenes.map((imagen, index) => (
+              {producto.imagenes.map((imagen: any, index: number) => (
                 <button
                   key={imagen.id}
                   onClick={() => setSelectedImage(index)}

@@ -1,7 +1,6 @@
-
-import { defineConfig } from 'vite';
-  import react from '@vitejs/plugin-react-swc';
-  import path from 'path';
+import { defineConfig } from 'vitest/config';
+import react from '@vitejs/plugin-react-swc';
+import path from 'path';
 
 export default defineConfig({
   plugins: [react()],
@@ -52,6 +51,7 @@ export default defineConfig({
     },
   },
   test: {
+    // @ts-ignore – Vitest types are provided via triple-slash directive
     environment: 'jsdom',
     setupFiles: ['src/setupTests.ts'],
     globals: true,

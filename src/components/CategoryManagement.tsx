@@ -71,7 +71,7 @@ export function CategoryManagement() {
     setIsDialogOpen(true);
   };
 
-  const handleDelete = async (categoryId: number) => {
+  const handleDelete = async (categoryId: string) => {
     // Check if category has products
     const products = await api.getProducts();
     const hasProducts = products.some(product => product.category_id === categoryId);

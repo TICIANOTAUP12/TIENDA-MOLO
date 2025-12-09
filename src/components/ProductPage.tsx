@@ -4,6 +4,7 @@ import { Product } from '../data/products';
 import { Button } from './ui/button';
 import { useCart } from '../contexts/CartContext';
 import { ImageWithFallback } from './figma/ImageWithFallback';
+import { openWhatsApp } from '../utils/whatsapp';
 
 interface ProductPageProps {
   product: Product;
@@ -21,15 +22,14 @@ export const ProductPage = ({ product, onClose }: ProductPageProps) => {
   };
 
   const handleWhatsAppOrder = () => {
-    const message = encodeURIComponent(
+    const message =
       `¡Hola! Me interesa el producto:\n\n` +
       `🛍️ ${product.name}\n` +
       `💰 Precio: $${product.price.toLocaleString()}\n` +
       `📏 Talla: ${selectedSize}\n` +
       `🎨 Color: ${selectedColor}\n\n` +
-      `¿Está disponible?`
-    );
-    window.open(`https://wa.me/5491234567890?text=${message}`, '_blank');
+      `¿Está disponible?`;
+    openWhatsApp(message);
   };
 
   return (
@@ -37,7 +37,7 @@ export const ProductPage = ({ product, onClose }: ProductPageProps) => {
       <div className="bg-white max-w-5xl w-full rounded-lg shadow-2xl my-8">
         <div className="sticky top-0 bg-white border-b p-4 flex items-center justify-between rounded-t-lg z-10">
           <h2 className="text-xl">Detalles del Producto</h2>
-          <Button variant="ghost" size="icon" onClick={onClose}>
+          <Button variant="ghost" size="icon" onClick={onClose} aria-label="Cerrar" title="Cerrar">
             <X className="w-5 h-5" />
           </Button>
         </div>
@@ -60,6 +60,9 @@ export const ProductPage = ({ product, onClose }: ProductPageProps) => {
                   className={`aspect-square rounded overflow-hidden border-2 transition ${
                     selectedImage === index ? 'border-black' : 'border-transparent'
                   }`}
+                  aria-label={`Seleccionar imagen ${index + 1}`}
+                  title={`Seleccionar imagen ${index + 1}`}
+                  type="button"
                 >
                   <ImageWithFallback
                     src={image}
