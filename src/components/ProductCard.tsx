@@ -250,8 +250,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({ producto, product, onW
                   )}
 
                   <div>
-                    <p className="text-sm text-gray-600 mb-2">Mensaje de WhatsApp</p>
+                    <label htmlFor="whatsappMessage" className="text-sm text-gray-600 mb-2 block">Mensaje de WhatsApp</label>
                     <textarea
+                      id="whatsappMessage"
+                      title="Mensaje de WhatsApp"
+                      placeholder="Escribe tu mensaje para WhatsApp"
+                      aria-label="Mensaje de WhatsApp"
                       value={message}
                       onChange={(e) => { setMessage(e.target.value); setUserEdited(true); }}
                       rows={4}
@@ -269,6 +273,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ producto, product, onW
                       <button
                         onClick={() => { setUserEdited(false); setMessage(baseMessage()); }}
                         className="text-xs text-gray-600 hover:text-black"
+                        aria-label="Restablecer mensaje"
+                        title="Restablecer mensaje"
                       >
                         Restablecer mensaje
                       </button>
