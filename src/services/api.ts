@@ -1,4 +1,11 @@
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string) || 'http://localhost:5000/api';
+
+function getCookie(name: string): string | null {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop()!.split(';').shift() || null;
+  return null;
+}
 
 export interface Producto {
   id: string;
@@ -61,7 +68,20 @@ export interface MetricasResumen {
 
 class ApiService {
   private async fetchWithError(url: string, options?: RequestInit) {
-    const response = await fetch(url, options);
+    const opts: RequestInit = { ...options };
+    const method = (opts.method || 'GET').toUpperCase();
+    if (method !== 'GET' && url.startsWith(API_BASE_URL)) {
+      if (!getCookie('csrf_token')) {
+        await fetch(`${API_BASE_URL}/csrf`, { method: 'GET', credentials: 'include' });
+      }
+      const csrf = getCookie('csrf_token');
+      opts.headers = {
+        ...(opts.headers || {}),
+        'X-CSRF-Token': csrf || ''
+      };
+      opts.credentials = 'include';
+    }
+    const response = await fetch(url, opts);
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
@@ -100,13 +120,23 @@ class ApiService {
   }
 
   // Auth
-  async login(username: string, password: string): Promise<{ access_token: string; user: any }> {
+  async login(username: string, password: string): Promise<any> {
     return this.fetchWithError(`${API_BASE_URL}/auth/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ username, password }),
+    });
+  }
+
+  async verifyMfa(challengeId: string, code: string): Promise<{ access_token: string; user: any }> {
+    return this.fetchWithError(`${API_BASE_URL}/auth/mfa/verify`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ challenge_id: challengeId, code }),
     });
   }
 

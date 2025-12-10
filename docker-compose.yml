@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  backend1:
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+    environment:
+      - FLASK_ENV=production
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - CSRF_SECURE=true
+    volumes:
+      - data_volume:/app/api/data
+      - uploads_volume:/app/uploads
+    networks:
+      - internal_net
+
+  backend2:
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+    environment:
+      - FLASK_ENV=production
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - CSRF_SECURE=true
+    volumes:
+      - data_volume:/app/api/data
+      - uploads_volume:/app/uploads
+    networks:
+      - internal_net
+
+  web:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    ports:
+      - "8443:8443"
+    volumes:
+      - ./certs:/etc/nginx/certs:ro
+    depends_on:
+      - backend1
+      - backend2
+    networks:
+      - internal_net
+
+networks:
+  internal_net:
+    driver: bridge
+
+volumes:
+  data_volume:
+  uploads_volume:

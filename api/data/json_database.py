@@ -13,6 +13,7 @@ class JsonDatabase:
         self.imagenes_file = os.path.join(data_dir, "imagenes.json")
         self.variantes_file = os.path.join(data_dir, "variantes.json")
         self.metricas_file = os.path.join(data_dir, "metricas.json")
+        self.audit_file = os.path.join(data_dir, "audit_log.json")
         
         self._ensure_files_exist()
     
@@ -26,7 +27,8 @@ class JsonDatabase:
             (self.productos_file, []),
             (self.imagenes_file, []),
             (self.variantes_file, []),
-            (self.metricas_file, [])
+            (self.metricas_file, []),
+            (self.audit_file, [])
         ]
         
         for file_path, default_data in files:
@@ -75,6 +77,11 @@ class JsonDatabase:
         admin_data['id'] = self._generate_id()
         admin_data['created_at'] = datetime.now().isoformat()
         admin_data['last_login'] = None
+        admin_data['role'] = admin_data.get('role', 'admin')
+        admin_data['failed_attempts'] = 0
+        admin_data['lock_until'] = None
+        admin_data['two_factor_enabled'] = admin_data.get('two_factor_enabled', False)
+        admin_data['two_factor_secret'] = admin_data.get('two_factor_secret')
         
         admins.append(admin_data)
         self._write_json(self.admins_file, admins)
@@ -88,6 +95,66 @@ class JsonDatabase:
                 admin['last_login'] = datetime.now().isoformat()
                 self._write_json(self.admins_file, admins)
                 break
+
+    def increment_failed_attempt(self, username: str, max_attempts: int = 5) -> Dict:
+        admins = self._read_json(self.admins_file)
+        for admin in admins:
+            if admin['username'] == username:
+                admin['failed_attempts'] = int(admin.get('failed_attempts', 0)) + 1
+                if admin['failed_attempts'] >= max_attempts:
+                    # bloquear por 15 minutos
+                    lock_until = datetime.now().timestamp() + 15 * 60
+                    admin['lock_until'] = lock_until
+                    admin['failed_attempts'] = 0
+                self._write_json(self.admins_file, admins)
+                return admin
+        return {}
+
+    def clear_failed_attempts(self, username: str):
+        admins = self._read_json(self.admins_file)
+        for admin in admins:
+            if admin['username'] == username:
+                admin['failed_attempts'] = 0
+                self._write_json(self.admins_file, admins)
+                return admin
+        return {}
+
+    def is_locked(self, username: str) -> bool:
+        admin = self.get_admin_by_username(username)
+        if not admin:
+            return False
+        lock_until = admin.get('lock_until')
+        if lock_until:
+            try:
+                if datetime.now().timestamp() < float(lock_until):
+                    return True
+                else:
+                    admin['lock_until'] = None
+                    self._write_json(self.admins_file, self._read_json(self.admins_file))
+                    return False
+            except Exception:
+                return False
+        return False
+
+    def set_two_factor(self, admin_id: str, enabled: bool, secret: Optional[str] = None):
+        admins = self._read_json(self.admins_file)
+        for admin in admins:
+            if admin['id'] == admin_id:
+                admin['two_factor_enabled'] = enabled
+                admin['two_factor_secret'] = secret
+                self._write_json(self.admins_file, admins)
+                return admin
+        return None
+
+    def log_event(self, event_type: str, details: Dict):
+        logs = self._read_json(self.audit_file)
+        logs.append({
+            'id': self._generate_id(),
+            'type': event_type,
+            'details': details,
+            'timestamp': datetime.now().isoformat()
+        })
+        self._write_json(self.audit_file, logs)
     
     # Métodos para Categorías
     def get_categorias(self) -> List[Dict]:

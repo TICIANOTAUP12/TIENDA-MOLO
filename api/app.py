@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory, make_response
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 from datetime import timedelta
@@ -6,6 +6,8 @@ import os
 from dotenv import load_dotenv
 import uuid
 from werkzeug.utils import secure_filename
+import secrets
+import time
 
 from services.auth_service import AuthService
 from services.product_service import ProductService
@@ -14,12 +16,15 @@ from services.metric_service import MetricService
 load_dotenv()
 
 app = Flask(__name__)
-CORS(app)
+# Configurar CORS con headers seguros
+CORS(app, supports_credentials=True, resources={r"/api/*": {"origins": os.getenv('CORS_ORIGINS', '*')}})
 
 app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'your-secret-key-change-this')
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=24)
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
+app.config['CSRF_COOKIE_NAME'] = 'csrf_token'
+app.config['CSRF_HEADER_NAME'] = 'X-CSRF-Token'
 
 jwt = JWTManager(app)
 
@@ -30,9 +35,39 @@ metric_service = MetricService()
 # Crear directorio de uploads si no existe
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
+def roles_required(roles):
+    def decorator(fn):
+        from functools import wraps
+        @wraps(fn)
+        @jwt_required()
+        def wrapper(*args, **kwargs):
+            admin_id = get_jwt_identity()
+            admin = auth_service.db.get_admin_by_id(admin_id)
+            if not admin or admin.get('role') not in roles:
+                return jsonify({'error': 'No autorizado'}), 403
+            return fn(*args, **kwargs)
+        return wrapper
+    return decorator
+
+@app.before_request
+def csrf_protect():
+    if request.method in ['POST', 'PUT', 'DELETE'] and request.path.startswith('/api/'):
+        token_cookie = request.cookies.get(app.config['CSRF_COOKIE_NAME'])
+        token_header = request.headers.get(app.config['CSRF_HEADER_NAME'])
+        if not token_cookie or not token_header or token_cookie != token_header:
+            return jsonify({'error': 'CSRF token inválido'}), 403
+
 @app.route('/api/health', methods=['GET'])
 def health_check():
     return jsonify({'status': 'healthy', 'message': 'API funcionando correctamente'})
+
+@app.route('/api/csrf', methods=['GET'])
+def get_csrf():
+    token = secrets.token_urlsafe(32)
+    resp = make_response(jsonify({'csrf_token': token}))
+    secure = os.getenv('CSRF_SECURE', 'false').lower() == 'true'
+    resp.set_cookie(app.config['CSRF_COOKIE_NAME'], token, secure=secure, httponly=False, samesite='Strict', max_age=3600)
+    return resp
 
 @app.route('/api/auth/login', methods=['POST'])
 def login():
@@ -45,19 +80,55 @@ def login():
             return jsonify({'error': 'Usuario y contraseña requeridos'}), 400
         
         admin = auth_service.authenticate_admin(username, password)
-        if admin:
-            access_token = create_access_token(identity=admin['id'])
-            return jsonify({
-                'access_token': access_token,
-                'user': {
-                    'id': admin['id'],
-                    'username': admin['username'],
-                    'email': admin['email']
-                }
-            })
-        else:
+        if admin is None:
+            auth_service.db.increment_failed_attempt(username)
+            auth_service.db.log_event('login_failed', {'username': username, 'ip': request.remote_addr})
             return jsonify({'error': 'Credenciales inválidas'}), 401
+        if isinstance(admin, dict) and admin.get('locked'):
+            return jsonify({'error': 'Cuenta bloqueada temporalmente'}), 423
+        if isinstance(admin, dict) and admin.get('mfa_required'):
+            auth_service.db.log_event('login_mfa_required', {'username': username})
+            return jsonify({'mfa_required': True, 'challenge_id': admin['challenge_id'], 'user': admin['user']}), 200
+        access_token = create_access_token(identity=admin['id'], additional_claims={'role': admin.get('role', 'admin')})
+        auth_service.db.log_event('login_success', {'admin_id': admin['id'], 'ip': request.remote_addr})
+        return jsonify({
+            'access_token': access_token,
+            'user': {
+                'id': admin['id'],
+                'username': admin['username'],
+                'email': admin['email'],
+                'role': admin.get('role', 'admin')
+            }
+        })
             
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/auth/mfa/verify', methods=['POST'])
+def mfa_verify():
+    try:
+        data = request.get_json()
+        challenge_id = data.get('challenge_id')
+        code = data.get('code')
+        if not challenge_id or not code:
+            return jsonify({'error': 'Datos de verificación incompletos'}), 400
+        admin = auth_service.verify_mfa(challenge_id, code)
+        if not admin:
+            return jsonify({'error': 'Código inválido'}), 401
+        access_token = create_access_token(identity=admin['id'], additional_claims={'role': admin.get('role', 'admin')})
+        return jsonify({'access_token': access_token, 'user': admin})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/auth/mfa/setup', methods=['POST'])
+@jwt_required()
+def mfa_setup():
+    try:
+        admin_id = get_jwt_identity()
+        res = auth_service.setup_mfa_secret(admin_id)
+        if not res:
+            return jsonify({'error': 'No se pudo generar secreto'}), 400
+        return jsonify(res)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -89,7 +160,7 @@ def get_producto(producto_id):
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/productos', methods=['POST'])
-@jwt_required()
+@roles_required(['admin'])
 def create_producto():
     try:
         data = request.get_json()
@@ -99,7 +170,7 @@ def create_producto():
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/productos/<producto_id>', methods=['PUT'])
-@jwt_required()
+@roles_required(['admin', 'editor'])
 def update_producto(producto_id):
     try:
         data = request.get_json()
@@ -112,7 +183,7 @@ def update_producto(producto_id):
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/productos/<producto_id>', methods=['DELETE'])
-@jwt_required()
+@roles_required(['admin'])
 def delete_producto(producto_id):
     try:
         if product_service.delete_producto(producto_id):
@@ -131,7 +202,7 @@ def get_categorias():
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/categorias', methods=['POST'])
-@jwt_required()
+@roles_required(['admin'])
 def create_categoria():
     try:
         data = request.get_json()
@@ -144,7 +215,7 @@ def create_categoria():
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/categorias/<categoria_id>', methods=['PUT'])
-@jwt_required()
+@roles_required(['admin', 'editor'])
 def update_categoria(categoria_id):
     try:
         data = request.get_json()
@@ -157,7 +228,7 @@ def update_categoria(categoria_id):
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/categorias/<categoria_id>', methods=['DELETE'])
-@jwt_required()
+@roles_required(['admin'])
 def delete_categoria(categoria_id):
     try:
         if product_service.delete_categoria(categoria_id):
@@ -168,7 +239,7 @@ def delete_categoria(categoria_id):
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/metricas/resumen', methods=['GET'])
-@jwt_required()
+@roles_required(['admin'])
 def get_metricas_resumen():
     try:
         metricas = metric_service.get_resumen_metricas()
