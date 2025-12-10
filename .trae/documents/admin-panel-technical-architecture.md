@@ -22,36 +22,48 @@ graph TD
 ```
 
 ## 2. Technology Description
-- **Frontend**: React@18 + TypeScript + TailwindCSS@3 + Vite
-- **Initialization Tool**: vite-init
-- **Backend**: Supabase (Backend-as-a-Service)
-- **Authentication**: Supabase Auth con JWT
-- **Database**: Supabase PostgreSQL
-- **Storage**: Supabase Storage para imágenes
-- **Charts**: Chart.js o Recharts para visualización de métricas
-- **UI Components**: HeadlessUI + Heroicons
+
+* **Frontend**: React\@18 + TypeScript + TailwindCSS\@3 + Vite
+
+* **Initialization Tool**: vite-init
+
+* **Backend**: Supabase (Backend-as-a-Service)
+
+* **Authentication**: Supabase Auth con JWT
+
+* **Database**: Supabase PostgreSQL
+
+* **Storage**: Supabase Storage para imágenes
+
+* **Charts**: Chart.js o Recharts para visualización de métricas
+
+* **UI Components**: HeadlessUI + Heroicons
 
 ## 3. Route definitions
-| Route | Purpose |
-|-------|---------|
-| /login | Página de autenticación para administradores |
-| /dashboard | Vista principal con métricas generales |
-| /products | Listado y gestión de productos |
-| /products/new | Formulario de creación de producto |
-| /products/:id/edit | Formulario de edición de producto |
-| /categories | Gestión de categorías |
-| /categories/new | Crear nueva categoría |
-| /categories/:id/edit | Editar categoría existente |
-| /metrics | Dashboard de métricas y análisis |
-| /settings | Configuración de usuario y sistema |
+
+| Route                | Purpose                                      |
+| -------------------- | -------------------------------------------- |
+| /login               | Página de autenticación para administradores |
+| /dashboard           | Vista principal con métricas generales       |
+| /products            | Listado y gestión de productos               |
+| /products/new        | Formulario de creación de producto           |
+| /products/:id/edit   | Formulario de edición de producto            |
+| /categories          | Gestión de categorías                        |
+| /categories/new      | Crear nueva categoría                        |
+| /categories/:id/edit | Editar categoría existente                   |
+| /metrics             | Dashboard de métricas y análisis             |
+| /settings            | Configuración de usuario y sistema           |
 
 ## 4. API definitions
 
 ### 4.1 Authentication APIs (Supabase)
+
 ```
 POST /auth/v1/token
 ```
+
 Request:
+
 ```json
 {
   "email": "admin@example.com",
@@ -60,6 +72,7 @@ Request:
 ```
 
 ### 4.2 Product APIs (Supabase)
+
 ```
 GET /rest/v1/products?select=*
 POST /rest/v1/products
@@ -68,6 +81,7 @@ DELETE /rest/v1/products?id=eq.{id}
 ```
 
 Product Type Definition:
+
 ```typescript
 interface Product {
   id: string
@@ -84,6 +98,7 @@ interface Product {
 ```
 
 ### 4.3 Category APIs (Supabase)
+
 ```
 GET /rest/v1/categories?select=*
 POST /rest/v1/categories
@@ -92,6 +107,7 @@ DELETE /rest/v1/categories?id=eq.{id}
 ```
 
 Category Type Definition:
+
 ```typescript
 interface Category {
   id: string
@@ -107,12 +123,14 @@ interface Category {
 ```
 
 ### 4.4 Metrics APIs (Supabase)
+
 ```
 GET /rest/v1/product_views?select=*&product_id=eq.{id}
 GET /rest/v1/product_clicks?select=*&product_id=eq.{id}
 ```
 
 Metrics Type Definition:
+
 ```typescript
 interface ProductView {
   id: string
@@ -160,6 +178,7 @@ graph TD
 ## 6. Data model
 
 ### 6.1 Data model definition
+
 ```mermaid
 erDiagram
     USERS ||--o{ PRODUCTS : creates
@@ -223,6 +242,7 @@ erDiagram
 ### 6.2 Data Definition Language
 
 Users Table (usuarios administradores)
+
 ```sql
 -- create table
 CREATE TABLE users (
@@ -246,6 +266,7 @@ CREATE POLICY "Super admins can manage all users" ON users
 ```
 
 Products Table
+
 ```sql
 -- create table
 CREATE TABLE products (
@@ -279,6 +300,7 @@ CREATE POLICY "Admins can manage all products" ON products
 ```
 
 Categories Table
+
 ```sql
 -- create table
 CREATE TABLE categories (
@@ -310,6 +332,7 @@ CREATE POLICY "Admins can manage categories" ON categories
 ```
 
 Product Views Table
+
 ```sql
 -- create table
 CREATE TABLE product_views (
@@ -336,6 +359,7 @@ CREATE POLICY "Admins can view product views" ON product_views
 ```
 
 Product Clicks Table
+
 ```sql
 -- create table
 CREATE TABLE product_clicks (
@@ -362,6 +386,7 @@ CREATE POLICY "Admins can view product clicks" ON product_clicks
 ```
 
 ### 6.3 Storage Configuration
+
 ```sql
 -- Create storage bucket for product images
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
@@ -379,6 +404,7 @@ CREATE POLICY "Public can view product images" ON storage.objects
 ```
 
 ### 6.4 Functions and Triggers
+
 ```sql
 -- Function to update product count in categories
 CREATE OR REPLACE FUNCTION update_category_product_count()
@@ -404,3 +430,4 @@ CREATE TRIGGER trigger_update_product_count
     FOR EACH ROW
     EXECUTE FUNCTION update_category_product_count();
 ```
+

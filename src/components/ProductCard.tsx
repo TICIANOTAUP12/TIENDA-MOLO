@@ -5,7 +5,7 @@ import { Producto } from '@/services/api';
 import { ShoppingCart, MessageCircle } from 'lucide-react';
 import type { Product as CatalogProduct } from '@/data/products';
 import { openWhatsApp } from '../utils/whatsapp';
-import { getWhatsAppHref } from '../utils/whatsapp';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 
 interface ProductCardProps {
   producto?: Producto;
@@ -19,8 +19,6 @@ export const ProductCard: React.FC<ProductCardProps> = ({ producto, product, onW
   const [mounted, setMounted] = useState(false);
   const [selectedSize, setSelectedSize] = useState<string | undefined>(undefined);
   const [selectedColor, setSelectedColor] = useState<string | undefined>(undefined);
-  const [message, setMessage] = useState<string>('');
-  const [userEdited, setUserEdited] = useState(false);
   useEffect(() => setMounted(true), []);
 
   const normalized = producto
@@ -86,16 +84,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({ producto, product, onW
     if (isOpen) {
       setSelectedSize(normalized.sizes && normalized.sizes.length > 0 ? normalized.sizes[0] : undefined);
       setSelectedColor(normalized.colors && normalized.colors.length > 0 ? normalized.colors[0] : undefined);
-      setUserEdited(false);
     }
   }, [isOpen, normalized]);
 
-  useEffect(() => {
-    if (!normalized) return;
-    if (!userEdited) {
-      setMessage(baseMessage());
-    }
-  }, [selectedSize, selectedColor, normalized, userEdited]);
 
   return (
     <div>
@@ -168,141 +159,83 @@ export const ProductCard: React.FC<ProductCardProps> = ({ producto, product, onW
       </CardFooter>
       </Card>
 
-      {normalized && mounted && isOpen && (
-        <div
-          className={`fixed inset-0 z-50 pointer-events-auto`}
-        >
-          <div
-            className={`absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-200 opacity-100`}
-            onClick={() => setIsOpen(false)}
-          />
-          <div className="absolute inset-0 flex items-center justify-center p-4">
-            <div
-              className={`bg-white w-full max-w-4xl rounded-lg shadow-2xl transition-transform duration-200 ease-out opacity-100 scale-100 translate-y-0`}
-              role="dialog"
-              aria-modal="true"
-            >
-              <div className="flex items-center justify-between p-4 border-b rounded-t-lg">
-                <h2 className="text-lg font-semibold">Detalles del Producto</h2>
-                <button
-                  onClick={() => setIsOpen(false)}
-                  className="rounded-full w-8 h-8 flex items-center justify-center hover:bg-gray-100"
-                  aria-label="Cerrar"
-                >
-                  ×
-                </button>
-              </div>
-              <div className="grid md:grid-cols-2 gap-6 p-6">
-                <div className="aspect-[3/4] overflow-hidden rounded-lg bg-gray-100">
-                  {normalized.image ? (
-                    <img
-                      src={normalized.image}
-                      alt={normalized.name}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gray-200">
-                      <span className="text-gray-400">Sin imagen</span>
-                    </div>
-                  )}
+      <Dialog open={!!(normalized && mounted && isOpen)} onOpenChange={(open: boolean) => setIsOpen(!!open)}>
+        <DialogContent className="sm:max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>Detalles del Producto</DialogTitle>
+            <DialogDescription className="sr-only">Información y opciones del producto</DialogDescription>
+          </DialogHeader>
+          <div className="grid md:grid-cols-2 gap-6">
+            <div className="aspect-[3/4] overflow-hidden rounded-lg bg-gray-100">
+              {normalized?.image ? (
+                <img src={normalized.image} alt={normalized?.name || 'Producto'} className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center bg-gray-200">
+                  <span className="text-gray-400">Sin imagen</span>
                 </div>
-                <div className="space-y-4">
-                  <h3 className="text-2xl font-bold text-gray-900">{normalized.name}</h3>
-                  <p className="text-xl font-semibold text-green-600">${normalized.price.toLocaleString('es-AR')}</p>
-                  <p className="text-gray-700">{normalized.description}</p>
+              )}
+            </div>
+            <div className="space-y-4">
+              <h3 className="text-2xl font-bold text-gray-900">{normalized?.name}</h3>
+              <p className="text-xl font-semibold text-green-600">${normalized?.price.toLocaleString('es-AR')}</p>
+              <p className="text-gray-700">{normalized?.description}</p>
 
-                  {normalized.sizes && normalized.sizes.length > 0 && (
-                    <div>
-                      <p className="text-sm text-gray-600 mb-2">Talla</p>
-                      <div className="flex flex-wrap gap-2">
-                        {normalized.sizes.map((size) => (
-                          <button
-                            key={size}
-                            onClick={() => { setSelectedSize(size); setUserEdited(false); }}
-                            className={`px-3 py-1 rounded border transition ${
-                              selectedSize === size ? 'bg-black text-white border-black' : 'bg-white border-gray-300 hover:border-black'
-                            }`}
-                          >
-                            {size}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {normalized.colors && normalized.colors.length > 0 && (
-                    <div>
-                      <p className="text-sm text-gray-600 mb-2">Color</p>
-                      <div className="flex flex-wrap gap-2">
-                        {normalized.colors.map((color) => (
-                          <button
-                            key={color}
-                            onClick={() => { setSelectedColor(color); setUserEdited(false); }}
-                            className={`px-3 py-1 rounded border transition ${
-                              selectedColor === color ? 'bg-black text-white border-black' : 'bg-white border-gray-300 hover:border-black'
-                            }`}
-                          >
-                            {color}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  <div>
-                    <label htmlFor="whatsappMessage" className="text-sm text-gray-600 mb-2 block">Mensaje de WhatsApp</label>
-                    <textarea
-                      id="whatsappMessage"
-                      title="Mensaje de WhatsApp"
-                      placeholder="Escribe tu mensaje para WhatsApp"
-                      aria-label="Mensaje de WhatsApp"
-                      value={message}
-                      onChange={(e) => { setMessage(e.target.value); setUserEdited(true); }}
-                      rows={4}
-                      className="w-full border rounded p-2 text-sm"
-                    />
-                    <div className="flex items-center justify-between mt-2">
-                      <a
-                        href={getWhatsAppHref(message)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs text-green-700 hover:underline"
-                      >
-                        Ver enlace directo
-                      </a>
+              {normalized?.sizes && normalized.sizes.length > 0 && (
+                <div>
+                  <p className="text-sm text-gray-600 mb-2">Talla</p>
+                  <div className="flex flex-wrap gap-2">
+                    {normalized.sizes.map((size) => (
                       <button
-                        onClick={() => { setUserEdited(false); setMessage(baseMessage()); }}
-                        className="text-xs text-gray-600 hover:text-black"
-                        aria-label="Restablecer mensaje"
-                        title="Restablecer mensaje"
+                        key={size}
+                        onClick={() => { setSelectedSize(size); }}
+                        className={`px-3 py-1 rounded border transition ${selectedSize === size ? 'bg-black text-white border-black' : 'bg-white border-gray-300 hover:border-black'}`}
+                        type="button"
+                        aria-pressed={selectedSize === size}
+                        aria-label={`Seleccionar talla ${size}`}
+                        title={`Seleccionar talla ${size}`}
                       >
-                        Restablecer mensaje
+                        {size}
                       </button>
-                    </div>
-                  </div>
-
-                  <div className="flex gap-3 pt-2">
-                    <Button
-                      onClick={() => openWhatsApp(message)}
-                      className="flex-1 bg-green-600 hover:bg-green-700 text-white"
-                    >
-                      <MessageCircle className="w-4 h-4 mr-2" />
-                      Enviar por WhatsApp
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={() => setIsOpen(false)}
-                      className="flex-1"
-                    >
-                      Cerrar
-                    </Button>
+                    ))}
                   </div>
                 </div>
+              )}
+
+              {normalized?.colors && normalized.colors.length > 0 && (
+                <div>
+                  <p className="text-sm text-gray-600 mb-2">Color</p>
+                  <div className="flex flex-wrap gap-2">
+                    {normalized.colors.map((color) => (
+                      <button
+                        key={color}
+                        onClick={() => { setSelectedColor(color); }}
+                        className={`px-3 py-1 rounded border transition ${selectedColor === color ? 'bg-black text-white border-black' : 'bg-white border-gray-300 hover:border-black'}`}
+                        type="button"
+                        aria-pressed={selectedColor === color}
+                        aria-label={`Seleccionar color ${color}`}
+                        title={`Seleccionar color ${color}`}
+                      >
+                        {color}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="bg-gray-50 border rounded p-3 text-sm text-gray-700">
+                {baseMessage()}
               </div>
+
+              <DialogFooter>
+                <Button onClick={() => openWhatsApp(baseMessage())} className="bg-green-600 hover:bg-green-700 text-white">
+                  <MessageCircle className="w-4 h-4 mr-2" />
+                  Enviar por WhatsApp
+                </Button>
+              </DialogFooter>
             </div>
           </div>
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
